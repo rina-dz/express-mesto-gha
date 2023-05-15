@@ -14,11 +14,11 @@ module.exports.getAllCards = (req, res) => {
 
 // удалить карточку по ID
 module.exports.deleteCrad = (req, res) => {
-  Card.findByIdAndRemove(req.params._id)
+  Card.findByIdAndRemove(req.params.cardId)
     .then(() => res.send({ message: 'Карточка была удалена' }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные при удалении карточки.' });
+        return res.status(404).send({ message: 'Переданы некорректные данные при удалении карточки.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
@@ -27,12 +27,10 @@ module.exports.deleteCrad = (req, res) => {
 // добавить карточку
 module.exports.createCard = (req, res) => {
   const { name, link } = req.body;
+  const owner = req.user;
 
-  Card.create({ name, link })
-    .then((card) => res.send({
-      name: card.name,
-      link: card.link,
-    }))
+  Card.create({ name, link, owner })
+    .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(400).send({ message: 'Переданы некорректные данные при создании карточки.' });
@@ -49,11 +47,11 @@ module.exports.likeCard = (req, res) => {
     { new: true },
   )
     .then((card) => {
-      res.send({ likes: card.likes.length });
+      res.send(card);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные.' });
+        return res.status(404).send({ message: 'Переданы некорректные данные.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
@@ -67,11 +65,11 @@ module.exports.dislikeCard = (req, res) => {
     { new: true },
   )
     .then((card) => {
-      res.send({ likes: card.likes.length });
+      res.send(card);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные.' });
+        return res.status(404).send({ message: 'Переданы некорректные данные.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
