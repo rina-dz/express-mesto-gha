@@ -8,6 +8,8 @@ const cardRouters = require('./routes/cards');
 const { PORT = 3000 } = process.env;
 const app = express();
 
+const notFoundErr = 404;
+
 app.listen(PORT, () => {
   console.log(`App listening on port ${PORT}`);
 });
@@ -31,6 +33,10 @@ app.use((req, res, next) => {
   };
 
   next();
+});
+
+app.get('*', (req, res) => {
+  res.status(notFoundErr).send({ message: 'Запросах по несуществующему маршруту' });
 });
 
 app.use('/users', userRouters);
