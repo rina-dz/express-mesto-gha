@@ -17,8 +17,11 @@ module.exports.deleteCrad = (req, res) => {
   Card.findByIdAndRemove(req.params.cardId)
     .then(() => res.send({ message: 'Карточка была удалена' }))
     .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(404).send({ message: 'Переданы некорректные данные.' });
+      }
       if (err.name === 'CastError') {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+        return res.status(400).send({ message: 'Передан несуществующий _id карточки.' });
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
@@ -51,10 +54,10 @@ module.exports.likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные для постановки лайка.' });
+        return res.status(404).send({ message: 'Переданы некорректные данные для постановки лайка.' });
       }
       if (err.name === 'CastError') {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+        return res.status(400).send('Передан несуществующий _id карточки.');
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
@@ -72,10 +75,10 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: ' Переданы некорректные данные для снятия лайка.' });
+        return res.status(404).send({ message: ' Переданы некорректные данные для снятия лайка.' });
       }
       if (err.name === 'CastError') {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+        return res.status(400).send('Передан несуществующий _id карточки.');
       }
       return res.status(500).send({ message: 'Ошибка по умолчанию.' });
     });
