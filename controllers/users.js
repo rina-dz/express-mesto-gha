@@ -8,12 +8,7 @@ const incorrectDataErr = 400;
 module.exports.getAllUsers = (req, res) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(incorrectDataErr).send({ message: 'Переданы некорректные данные.' });
-      }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
-    });
+    .catch(() => res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' }));
 };
 
 // найти пользователя по ID

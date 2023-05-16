@@ -8,12 +8,7 @@ const incorrectDataErr = 400;
 module.exports.getAllCards = (req, res) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(incorrectDataErr).send({ message: 'Переданы некорректные данные.' });
-      }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
-    });
+    .catch(() => res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' }));
 };
 
 // удалить карточку по ID

@@ -24,7 +24,7 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
     console.log(`Что-то идёт не так: ${err}`);
   });
 
-app.use(bodyParser());
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
@@ -35,10 +35,10 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get('*', (req, res) => {
-  res.status(notFoundErr).send({ message: 'Запросах по несуществующему маршруту' });
-});
-
 app.use('/users', userRouters);
 
 app.use('/cards', cardRouters);
+
+app.get('*', (req, res) => {
+  res.status(notFoundErr).send({ message: 'Запросах по несуществующему маршруту' });
+});
