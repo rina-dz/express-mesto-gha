@@ -1,25 +1,31 @@
 const Card = require('../models/card');
 
-const defaultErr = 500;
-const notFoundErr = 404;
-const incorrectDataErr = 400;
+const DefaultError = require('../utils/errors/default-err');
+const IncorrectDataErr = require('../utils/errors/incorrect-data-err');
+const NotFoundError = require('../utils/errors/not-found-err');
 
 // получить все карточки
 module.exports.getAllCards = (req, res) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
-    .catch(() => res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' }));
+    .catch(() => next(new DefaultError('Ошибка по умолчанию.')));
 };
 
-// удалить карточку по ID
+// удалить карточку
 module.exports.deleteCrad = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .then(() => res.send({ message: 'Карточка была удалена' }))
-    .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(incorrectDataErr).send({ message: 'Передан несуществующий _id карточки.' });
+  Card.findById(req.params.cardId)
+    .then((card) => {
+      if (card.owner._id !== req.user._id) {
+        throw new NotFoundError('Передан несуществующий _id карточки.');
       }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
+      Card.findByIdAndRemove(req.params.cardId)
+        .catch((err) => {
+          if (err.name === 'CastError') {
+            next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
+          }
+          next(new DefaultError('Ошибка по умолчанию.'));
+        });
+      return res.send({ message: 'Карточка была удалена' });
     });
 };
 
@@ -32,9 +38,9 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(notFoundErr).send({ message: 'Переданы некорректные данные при создании карточки.' });
+        next(new NotFoundError('Переданы некорректные данные при создании карточки.'))
       }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
@@ -50,9 +56,9 @@ module.exports.likeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(incorrectDataErr).send('Передан несуществующий _id карточки.');
+        next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
       }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
@@ -68,8 +74,8 @@ module.exports.dislikeCard = (req, res) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(incorrectDataErr).send('Передан несуществующий _id карточки.');
+        next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
       }
-      return res.status(defaultErr).send({ message: 'Ошибка по умолчанию.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };

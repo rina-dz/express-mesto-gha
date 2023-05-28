@@ -5,6 +5,13 @@ const bodyParser = require('body-parser');
 const userRouters = require('./routes/users');
 const cardRouters = require('./routes/cards');
 
+const {
+  createUser,
+  login,
+} = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const error = require('./middlewares/error');
+
 const { PORT = 3000 } = process.env;
 const app = express();
 
@@ -27,17 +34,15 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '64617e97e76e449f4257ca9a',
-  };
+app.post('/signin', login);
+app.post('/signup', createUser);
 
-  next();
-});
+app.use(auth);
 
 app.use('/users', userRouters);
-
 app.use('/cards', cardRouters);
+
+app.use(error);
 
 app.get('*', (req, res) => {
   res.status(notFoundErr).send({ message: 'Запросах по несуществующему маршруту' });
