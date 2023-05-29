@@ -2,15 +2,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-const DefaultError = require('../utils/errors/default-err');
 const IncorrectDataErr = require('../utils/errors/incorrect-data-err');
 const NotFoundError = require('../utils/errors/not-found-err');
+const UniqueError = require('../utils/errors/unique-err');
+const AuthError = require('../utils/errors/not-found-err');
 
 // получить всех пользователей
 module.exports.getAllUsers = (req, res) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => next(new DefaultError('Ошибка по умолчанию.')));
+    .catch(next);
 };
 
 // найти пользователя по ID
@@ -25,12 +26,12 @@ module.exports.getOneUser = (req, res) => {
     })
     .catch((err) => {
       if (err.status === 404) {
-        next(new NotFoundError('Пользователь с указанным _id не найден.'));
+        return next(new NotFoundError('Пользователь с указанным _id не найден.'));
       }
       if (err.name === 'CastError') {
-        next(new IncorrectDataErr('Переданы некорректные данные.'));
+        return next(new IncorrectDataErr('Переданы некорректные данные.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      next(err);
     });
 };
 
@@ -48,10 +49,13 @@ module.exports.createUser = (req, res) => {
     })
     .then((user) => res.status(201).send(user))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new IncorrectDataErr('Переданы некорректные данные при создании пользователя.'));
+      if (err.code === 11000) {
+        return next(new UniqueError('Указанная вами почта уже занята.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      if (err.name === 'ValidationError') {
+        return next(new IncorrectDataErr('Переданы некорректные данные при создании пользователя.'));
+      }
+      next(err);
     });
 };
 
@@ -63,9 +67,9 @@ module.exports.updateUserInfo = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
+        return next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      next(err);
     });
 };
 
@@ -77,9 +81,9 @@ module.exports.updateUserAvatar = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
+        return next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      next(err);
     });
 };
 
@@ -90,20 +94,18 @@ module.exports.login = (req, res) => {
   User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        return Promise.reject(new AuthError('Неправильные почта или пароль'));
       }
 
       return bcrypt.compare(password, user.password);
     })
     .then((matched, user) => {
       if (!matched) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        return Promise.reject(new AuthError('Неправильные почта или пароль'));
       }
       return res.send({
         token: jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' }),
       });
     })
-    .catch(() => {
-      next(new DefaultError('Ошибка по умолчанию.'));
-    });
+    .catch(next);
 };
