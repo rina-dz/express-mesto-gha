@@ -32,6 +32,24 @@ module.exports.getOneUser = (req, res, next) => {
     });
 };
 
+// найти текущего пользователя
+module.exports.getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь с указанным _id не найден.');
+      } else {
+        res.send(user);
+      }
+    })
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        return next(new IncorrectDataErr('Переданы некорректные данные.'));
+      }
+      return next(err);
+    });
+};
+
 // добавить пользователя
 module.exports.createUser = (req, res, next) => {
   const {
@@ -94,15 +112,15 @@ module.exports.login = (req, res, next) => {
         return Promise.reject(new AuthError('Неправильные почта или пароль'));
       }
 
-      return bcrypt.compare(password, user.password);
-    })
-    .then((matched, user) => {
-      if (!matched) {
-        return Promise.reject(new AuthError('Неправильные почта или пароль'));
-      }
-      return res.send({
-        token: jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' }),
-      });
+      return bcrypt.compare(password, user.password)
+        .then((matched) => {
+          if (!matched) {
+            return Promise.reject(new AuthError('Неправильные почта или пароль'));
+          }
+          return res.send({
+            token: jwt.sign({ _id: user._id }, 'super-strong-secret', { expiresIn: '7d' }),
+          });
+        });
     })
     .catch(next);
 };
