@@ -8,14 +8,14 @@ const UniqueError = require('../utils/errors/unique-err');
 const AuthError = require('../utils/errors/not-found-err');
 
 // получить всех пользователей
-module.exports.getAllUsers = (req, res) => {
+module.exports.getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
     .catch(next);
 };
 
 // найти пользователя по ID
-module.exports.getOneUser = (req, res) => {
+module.exports.getOneUser = (req, res, next) => {
   User.findById(req.params.id)
     .then((user) => {
       if (!user) {
@@ -25,29 +25,26 @@ module.exports.getOneUser = (req, res) => {
       }
     })
     .catch((err) => {
-      if (err.status === 404) {
-        return next(new NotFoundError('Пользователь с указанным _id не найден.'));
-      }
       if (err.name === 'CastError') {
         return next(new IncorrectDataErr('Переданы некорректные данные.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // добавить пользователя
-module.exports.createUser = (req, res) => {
+module.exports.createUser = (req, res, next) => {
   const {
     name, about, avatar, email,
   } = req.body;
 
   bcrypt.hash(req.body.password, 10)
-    .then((hash) => {
-      User.create({
-        name, about, avatar, email, password: hash,
-      });
-    })
-    .then((user) => res.status(201).send(user))
+    .then((hash) => User.create({
+      name, about, avatar, email, password: hash,
+    }))
+    .then(() => res.status(201).send({
+      name, about, avatar, email,
+    }))
     .catch((err) => {
       if (err.code === 11000) {
         return next(new UniqueError('Указанная вами почта уже занята.'));
@@ -55,12 +52,12 @@ module.exports.createUser = (req, res) => {
       if (err.name === 'ValidationError') {
         return next(new IncorrectDataErr('Переданы некорректные данные при создании пользователя.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // обновить информацию пользователя
-module.exports.updateUserInfo = (req, res) => {
+module.exports.updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { name, about }, { new: true, runValidators: true })
@@ -69,12 +66,12 @@ module.exports.updateUserInfo = (req, res) => {
       if (err.name === 'ValidationError') {
         return next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // обновить аватар пользователя
-module.exports.updateUserAvatar = (req, res) => {
+module.exports.updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true, runValidators: true })
@@ -83,12 +80,12 @@ module.exports.updateUserAvatar = (req, res) => {
       if (err.name === 'ValidationError') {
         return next(new IncorrectDataErr('Переданы некорректные данные при изменении информации.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // контроллер login
-module.exports.login = (req, res) => {
+module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findOne({ email }).select('+password')

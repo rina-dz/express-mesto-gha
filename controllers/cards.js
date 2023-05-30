@@ -1,19 +1,18 @@
 const Card = require('../models/card');
 
-const DefaultError = require('../utils/errors/default-err');
 const IncorrectDataErr = require('../utils/errors/incorrect-data-err');
 const NotFoundError = require('../utils/errors/not-found-err');
 const AccessError = require('../utils/errors/access-err');
 
 // получить все карточки
-module.exports.getAllCards = (req, res) => {
+module.exports.getAllCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send({ data: cards }))
     .catch(next);
 };
 
 // удалить карточку
-module.exports.deleteCrad = (req, res) => {
+module.exports.deleteCrad = (req, res, next) => {
   Card.findById(req.params.cardId)
     .orFail(() => new NotFoundError('Пользователь с указанным id не существует'))
     .then((card) => {
@@ -21,18 +20,19 @@ module.exports.deleteCrad = (req, res) => {
         throw new AccessError('Вы не можете удалить чужую карточку.');
       }
       Card.findByIdAndRemove(req.params.cardId)
+        .then(() => { res.send({ message: 'Карточка была удалена' }); })
         .catch((err) => {
           if (err.name === 'CastError') {
             return next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
           }
-          next(err);
+          return next(err);
         });
-      return res.send({ message: 'Карточка была удалена' });
-    });
+    })
+    .catch((err) => { next(err); });
 };
 
 // добавить карточку
-module.exports.createCard = (req, res) => {
+module.exports.createCard = (req, res, next) => {
   const { name, link } = req.body;
   const owner = req.user;
 
@@ -40,14 +40,14 @@ module.exports.createCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new NotFoundError('Переданы некорректные данные при создании карточки.'))
+        return next(new IncorrectDataErr('Переданы некорректные данные при создании карточки.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // поставить лайк карточке
-module.exports.likeCard = (req, res) => {
+module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -61,12 +61,12 @@ module.exports.likeCard = (req, res) => {
       if (err.name === 'CastError') {
         return next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
       }
-      next(err);
+      return next(err);
     });
 };
 
 // убрать лайк с карточки
-module.exports.dislikeCard = (req, res) => {
+module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -80,6 +80,6 @@ module.exports.dislikeCard = (req, res) => {
       if (err.name === 'CastError') {
         return next(new IncorrectDataErr('Передан несуществующий _id карточки.'));
       }
-      next(err);
+      return next(err);
     });
 };

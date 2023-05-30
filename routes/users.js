@@ -9,22 +9,13 @@ const {
 } = require('../controllers/users');
 
 router.get('/', getAllUsers);
-router.get(
-  '/me',
-  celebrate({
-    body: Joi.object().keys({
-      name: Joi.string().min(2).max(30),
-      about: Joi.string().min(2).max(30),
-    }),
-  }),
-  getUserInfo,
-);
+router.get('/me', getUserInfo);
 router.get(
   '/:id',
   celebrate({
     params: Joi.object().keys({
-      id: Joi.string().alphanum(),
-    }).unknown(true),
+      id: Joi.string().length(24).hex().required(),
+    }),
   }),
   getOneUser,
 );
@@ -42,7 +33,7 @@ router.patch(
   '/me/avatar',
   celebrate({
     body: Joi.object().keys({
-      avatar: Joi.string().regex(/^https?:\/\/(wwq\.)?[a-z0-9\-._~:/?#[\]@!$&'()*+,;=]{1,}#?$/i),
+      avatar: Joi.string().regex(/^https?:\/\/(wwq\.)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]{1,}#?\/|(.ru)|(.com)$/i),
     }),
   }),
   updateUserAvatar,

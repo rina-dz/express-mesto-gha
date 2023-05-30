@@ -52,7 +52,7 @@ app.post(
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
-      avatar: Joi.string().regex(/^https?:\/\/(wwq\.)?[a-z0-9\-._~:/?#[\]@!$&'()*+,;=]{1,}#?$/i),
+      avatar: Joi.string().regex(/^https?:\/\/(wwq\.)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]{1,}#?\/|(.ru)|(.com)$/i),
       email: Joi.string().required().email(),
       password: Joi.string().required(),
     }),
@@ -65,7 +65,7 @@ app.use(auth);
 app.use('/users', userRouters);
 app.use('/cards', cardRouters);
 
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
   next(new NotFoundError('Запрос по несуществующему маршруту'));
 });
 
