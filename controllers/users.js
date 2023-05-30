@@ -5,7 +5,7 @@ const User = require('../models/user');
 const IncorrectDataErr = require('../utils/errors/incorrect-data-err');
 const NotFoundError = require('../utils/errors/not-found-err');
 const UniqueError = require('../utils/errors/unique-err');
-const AuthError = require('../utils/errors/not-found-err');
+const AuthError = require('../utils/errors/auth-err');
 
 // получить всех пользователей
 module.exports.getAllUsers = (req, res, next) => {

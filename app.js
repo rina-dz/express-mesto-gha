@@ -65,7 +65,7 @@ app.use(auth);
 app.use('/users', userRouters);
 app.use('/cards', cardRouters);
 
-app.get('*', (req, res, next) => {
+app.use('*', (req, res, next) => {
   next(new NotFoundError('Запрос по несуществующему маршруту'));
 });
 
